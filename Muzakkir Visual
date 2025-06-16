@@ -1,0 +1,82 @@
+import sqlite3
+import tkinter as tk
+from tkinter import messagebox
+
+# ======== FUNGSI UNTUK MEMBUAT TABEL ==========
+def buat_tabel():
+    conn = sqlite3.connect("data.db")
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS krs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nama TEXT,
+            nim TEXT,
+            jurusan TEXT,
+            matakuliah TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+# ======== FUNGSI SIMPAN DATA ==========
+def simpan_data():
+    nama = entry_nama.get()
+    nim = entry_nim.get()
+    jurusan = entry_jurusan.get()
+    matakuliah_terpilih = listbox_matakuliah.curselection()
+    
+    if not (nama and nim and jurusan and matakuliah_terpilih):
+        messagebox.showerror("Error", "Semua data harus diisi!")
+        return
+
+    matakuliah = ', '.join([listbox_matakuliah.get(i) for i in matakuliah_terpilih])
+
+    try:
+        conn = sqlite3.connect("data.db")
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO krs (nama, nim, jurusan, matakuliah) VALUES (?, ?, ?, ?)",
+                       (nama, nim, jurusan, matakuliah))
+        conn.commit()
+        conn.close()
+        messagebox.showinfo("Sukses", "Data berhasil disimpan.")
+        clear_form()
+    except Exception as e:
+        messagebox.showerror("Terjadi kesalahan", str(e))
+
+# ======== FUNGSI BERSIHKAN FORM ==========
+def clear_form():
+    entry_nama.delete(0, tk.END)
+    entry_nim.delete(0, tk.END)
+    entry_jurusan.delete(0, tk.END)
+    listbox_matakuliah.selection_clear(0, tk.END)
+
+# ======== ANTARMUKA TKINTER ==========
+root = tk.Tk()
+root.title("Form Pengisian KRS")
+
+tk.Label(root, text="Nama:").grid(row=0, column=0, sticky="e")
+entry_nama = tk.Entry(root)
+entry_nama.grid(row=0, column=1)
+
+tk.Label(root, text="NIM:").grid(row=1, column=0, sticky="e")
+entry_nim = tk.Entry(root)
+entry_nim.grid(row=1, column=1)
+
+tk.Label(root, text="Jurusan:").grid(row=2, column=0, sticky="e")
+entry_jurusan = tk.Entry(root)
+entry_jurusan.grid(row=2, column=1)
+
+tk.Label(root, text="Mata Kuliah:").grid(row=3, column=0, sticky="ne")
+listbox_matakuliah = tk.Listbox(root, selectmode=tk.MULTIPLE, height=6)
+matakuliah_list = ["Matematika", "Fisika", "Kimia", "Biologi", "Informatika"]
+for mk in matakuliah_list:
+    listbox_matakuliah.insert(tk.END, mk)
+listbox_matakuliah.grid(row=3, column=1)
+
+btn_simpan = tk.Button(root, text="Simpan", command=simpan_data)
+btn_simpan.grid(row=4, column=1, pady=10)
+
+# Buat tabel jika belum ada
+buat_tabel()
+
+root.mainloop()
